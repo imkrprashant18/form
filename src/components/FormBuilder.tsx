@@ -1,7 +1,11 @@
 import React, { useState } from "react";
-import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  DropResult,
+} from "react-beautiful-dnd";
 import { z } from "zod";
-import FormElement from "./FormElement";
 import FormPreview from "./FormPreview";
 import ToolBox from "./ToolBox";
 import ValidationConfig from "./ValidationConfig";
@@ -68,7 +72,7 @@ const FormBuilder: React.FC = () => {
         <div className="w-full lg:w-1/3">
           <ToolBox addElement={addElement} setLayout={setLayout} />
           <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId="form-elements">
+            <Droppable droppableId="form-elements" type="list">
               {(provided) => (
                 <div
                   {...provided.droppableProps}
@@ -76,13 +80,58 @@ const FormBuilder: React.FC = () => {
                   className="bg-gray-100 p-4 rounded min-h-[200px]"
                 >
                   {elements.map((element, index) => (
-                    <FormElement
+                    <Draggable
                       key={element.id}
-                      element={element}
+                      draggableId={element.id}
                       index={index}
-                      updateElement={updateElement}
-                      removeElement={removeElement}
-                    />
+                    >
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          className="bg-white p-4 mb-2 rounded shadow"
+                        >
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="font-semibold">
+                              {element.type}
+                            </span>
+                            <button
+                              onClick={() => removeElement(element.id)}
+                              className="text-red-500 hover:text-red-700"
+                              aria-label={`Remove ${element.type} field`}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                          <input
+                            type="text"
+                            value={element.label}
+                            onChange={(e) =>
+                              updateElement(element.id, {
+                                label: e.target.value,
+                              })
+                            }
+                            className="w-full p-2 border rounded"
+                            aria-label={`Label for ${element.type} field`}
+                          />
+                          {(element.type === "select" ||
+                            element.type === "radio") && (
+                            <textarea
+                              value={element.options?.join("\n")}
+                              onChange={(e) =>
+                                updateElement(element.id, {
+                                  options: e.target.value.split("\n"),
+                                })
+                              }
+                              className="w-full p-2 border rounded mt-2"
+                              placeholder="Enter options (one per line)"
+                              rows={3}
+                            />
+                          )}
+                        </div>
+                      )}
+                    </Draggable>
                   ))}
                   {provided.placeholder}
                 </div>
